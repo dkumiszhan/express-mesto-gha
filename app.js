@@ -1,10 +1,11 @@
-const express = require("express");
+const express = require('express');
+const mongoose = require('mongoose');
+
 const { PORT = 3000 } = process.env;
 
 const app = express();
 
-const mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost:27017/mestodb");
+mongoose.connect('mongodb://localhost:27017/mestodb');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -56,18 +57,18 @@ const cardSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("user", userSchema);
-module.exports = mongoose.model("card", cardSchema);
+module.exports = mongoose.model('user', userSchema);
+module.exports = mongoose.model('card', cardSchema);
 
-app.get("/users", (req, res) => {
+app.get('/users', (req, res) => {
   res.send(req.params);
-  console.log("get users request");
+  console.log('get users request');
 });
 
-app.get("/users/:userId", (req, res) => {
+app.get('/users/:userId', (req, res) => {
   const { id } = req.params;
   res.send(id);
-  console.log("get user by id request");
+  console.log('get user by id request');
 });
 
 app.listen(PORT, () => {
