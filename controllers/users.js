@@ -1,13 +1,16 @@
 /* eslint-disable no-underscore-dangle */
 const User = require('../models/user');
 
+const BAD_REQUEST_MSG = 'Переданы некорректные данные';
+const INTERNAL_SERVER_ERROR_MSG = 'Произошла ошибка на сервере';
+const NOT_FOUND_MSG = 'Пользователь не найден';
 const getUsers = async (req, res) => {
   try {
     // console.log('get users request');
     const users = await User.find({});
     res.status(200).send(users);
   } catch (e) {
-    res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
+    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
@@ -19,14 +22,14 @@ const getUserById = async (req, res) => {
     // console.log(id);
     const user = await User.findById(id);
     if (!user) {
-      res.status(404).send({ message: 'Пользователь не найден' });
+      res.status(404).send({ message: NOT_FOUND_MSG });
     } else {
       // console.log(user);
 
       res.status(200).send(user);
     }
   } catch (e) {
-    res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
+    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
@@ -36,9 +39,9 @@ function handleDbError(error, res) {
     error
     && (error._message === 'user validation failed' || error._message === 'Validation failed')
   ) {
-    res.status(400).send({ message: 'Переданы некорректные данные' });
+    res.status(400).send({ message: BAD_REQUEST_MSG });
   } else {
-    res.status(500).send({ message: 'Произошла ошибка на сервере', ...error });
+    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...error });
   }
 }
 
@@ -70,7 +73,7 @@ const updateUserInfo = async (req, res) => {
       { new: true, runValidators: true },
     );
     if (!updatedUser) {
-      res.status(404).send({ message: 'Пользователь не найден' });
+      res.status(404).send({ message: NOT_FOUND_MSG });
     } else {
       res.status(200).send(updatedUser);
     }
@@ -90,7 +93,7 @@ const updateUserAvatar = async (req, res) => {
       { new: true, runValidators: true },
     );
     if (!updatedUser) {
-      res.status(404).send({ message: 'Пользователь не найден' });
+      res.status(404).send({ message: NOT_FOUND_MSG });
     } else {
       res.status(200).send(updatedUser);
     }

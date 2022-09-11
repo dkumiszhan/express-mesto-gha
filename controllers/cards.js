@@ -1,14 +1,17 @@
 /* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
 
+const BAD_REQUEST_MSG = 'Переданы некорректные данные';
+const INTERNAL_SERVER_ERROR_MSG = 'Произошла ошибка на сервере';
+const NOT_FOUND_MSG = 'Карточка не найдена';
 function handleDbError(error, res) {
   if (
     error
     && (error._message === 'card validation failed' || error._message === 'Validation failed')
   ) {
-    res.status(400).send({ message: 'Переданы некорректные данные' });
+    res.status(400).send({ message: BAD_REQUEST_MSG });
   } else {
-    res.status(500).send({ message: 'Произошла ошибка на сервере', ...error });
+    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...error });
   }
 }
 
@@ -18,7 +21,7 @@ const getCards = async (req, res) => {
     const cards = await Card.find({});
     res.status(200).send(cards);
   } catch (e) {
-    res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
+    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
@@ -40,7 +43,7 @@ const deleteCard = async (req, res) => {
     const cardToDelete = await Card.findByIdAndRemove(req.params.cardId);
     // console.log(cardToDelete);
     if (!cardToDelete) {
-      res.status(404).send({ message: 'Карточка не найдена' });
+      res.status(404).send({ message: NOT_FOUND_MSG });
     } else {
       res.status(200).send('');
     }
@@ -59,7 +62,7 @@ const putLike = async (req, res) => {
       { new: true },
     );
     if (!updatedCard) {
-      res.status(404).send({ message: 'Карточка не найдена' });
+      res.status(404).send({ message: NOT_FOUND_MSG });
     } else {
       res.status(200).send('');
     }
@@ -77,7 +80,7 @@ const deleteLike = async (req, res) => {
       { new: true },
     );
     if (!updatedCard) {
-      res.status(404).send({ message: 'Карточка не найдена' });
+      res.status(404).send({ message: NOT_FOUND_MSG });
     } else {
       res.status(200).send('');
     }
