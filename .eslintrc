@@ -1,7 +1,3 @@
 {
   "extends": "airbnb-base"
-  // "env": {
-  //   "es6": true
-  // }
-  /*eslint no-underscore-dangle: ["error", { "allow": ["id_", "_id"] }]*/
 }
