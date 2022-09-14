@@ -1,16 +1,21 @@
-/* eslint-disable no-underscore-dangle */
+// /* eslint-disable no-underscore-dangle */
+// const mongoose = require('mongoose');
 const User = require('../models/user');
 
 const BAD_REQUEST_MSG = 'Переданы некорректные данные';
 const INTERNAL_SERVER_ERROR_MSG = 'Произошла ошибка на сервере';
 const NOT_FOUND_MSG = 'Пользователь не найден';
+const BAD_REQUEST_STATUS = 400;
+const INTERNAL_SERVER_ERR_STATUS = 500;
+const NOT_FOUND_STATUS = 404;
+const SUCCESS_STATUS = 200;
 const getUsers = async (req, res) => {
   try {
     // console.log('get users request');
     const users = await User.find({});
-    res.status(200).send(users);
+    res.status(SUCCESS_STATUS).send({ data: users });
   } catch (e) {
-    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
@@ -20,30 +25,23 @@ const getUserById = async (req, res) => {
     const id = req.params.userId;
     // console.dir(req.params);
     // console.log(id);
+    // const mongoId = new mongoose.Schema.Types.ObjectId(id);
     const user = await User.findById(id);
     if (!user) {
-      res.status(404).send({ message: NOT_FOUND_MSG });
+      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
     } else {
       // console.log(user);
 
-      res.status(200).send(user);
+      res.status(SUCCESS_STATUS).send({ data: user });
     }
   } catch (e) {
-    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
+    if (e.name === 'CastError') {
+      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
+      return;
+    }
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
-
-function handleDbError(error, res) {
-  // eslint-disable-next-line no-underscore-dangle
-  if (
-    error
-    && (error._message === 'user validation failed' || error._message === 'Validation failed')
-  ) {
-    res.status(400).send({ message: BAD_REQUEST_MSG });
-  } else {
-    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...error });
-  }
-}
 
 const createUser = async (req, res) => {
   try {
@@ -52,54 +50,88 @@ const createUser = async (req, res) => {
     // console.log(req.body);
     const user = await new User({ name, about, avatar }).save();
 
-    res.status(200).send(user);
+    res.status(SUCCESS_STATUS).send({ data: user });
   } catch (e) {
-    handleDbError(e, res);
+    if ((e && e.errors && e.errors.about && e.errors.about.name === 'ValidatorError')
+    || (e && e.errors && e.errors.name && e.errors.name.name === 'ValidatorError')
+    || (e && e.errors && e.errors.avatar && e.errors.avatar.name === 'ValidatorError')) {
+      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
+      return;
+    }
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
+
+function ensureFieldIsStringOrUndefined(field, res) {
+  if (typeof (field) === 'string' || typeof (field) === 'undefined') {
+    return true;
+  }
+  // else {
+  // console.log(field, typeof (field));
+  res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG });
+  return false;
+  // return false;
+  // }
+}
 
 const updateUserInfo = async (req, res) => {
   try {
     // console.log('update user info');
     // console.dir(req.user);
     // console.dir(req.body);
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        name: req.body.name,
-        about: req.body.about,
-        avatar: req.body.avatar,
-      },
-      { new: true, runValidators: true },
-    );
-    if (!updatedUser) {
-      res.status(404).send({ message: NOT_FOUND_MSG });
-    } else {
-      res.status(200).send(updatedUser);
+    if (ensureFieldIsStringOrUndefined(req.body.name, res)
+    && ensureFieldIsStringOrUndefined(req.body.about, res)
+    && ensureFieldIsStringOrUndefined(req.body.avatar, res)) {
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          name: req.body.name,
+          about: req.body.about,
+          avatar: req.body.avatar,
+        },
+        { new: true, runValidators: true },
+      );
+      if (!updatedUser) {
+        res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
+      } else {
+        res.status(SUCCESS_STATUS).send({ data: updatedUser });
+      }
     }
   } catch (e) {
-    handleDbError(e, res);
+    if ((e && e.errors && e.errors.about && e.errors.about.name === 'ValidatorError')
+    || (e && e.errors && e.errors.name && e.errors.name.name === 'ValidatorError')
+    || (e && e.errors && e.errors.avatar && e.errors.avatar.name === 'ValidatorError')) {
+      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
+      return;
+    }
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
 const updateUserAvatar = async (req, res) => {
   try {
     // console.log('update avatar');
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        avatar: req.body.avatar,
-      },
-      { new: true, runValidators: true },
-    );
-    if (!updatedUser) {
-      res.status(404).send({ message: NOT_FOUND_MSG });
-    } else {
-      res.status(200).send(updatedUser);
+    if (ensureFieldIsStringOrUndefined(req.body.avatar, res)) {
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          avatar: req.body.avatar,
+        },
+        { new: true, runValidators: true },
+      );
+      if (!updatedUser) {
+        res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
+      } else {
+        res.status(SUCCESS_STATUS).send({ data: updatedUser });
+      }
     }
   } catch (e) {
     // console.dir(e);
-    handleDbError(e, res);
+    if (e && e.errors && e.errors.avatar && e.errors.avatar.name === 'ValidatorError') {
+      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
+      return;
+    }
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 

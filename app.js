@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { cardRoutes } = require('./routes/cards');
 const { userRoutes } = require('./routes/users');
+const notFoundHandler = require('./routes/notFound');
 
 const { PORT = 3000 } = process.env;
 
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 
 app.use(userRoutes);
 app.use(cardRoutes);
+app.use(notFoundHandler);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

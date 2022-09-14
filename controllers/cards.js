@@ -1,27 +1,20 @@
-/* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
 
 const BAD_REQUEST_MSG = 'Переданы некорректные данные';
 const INTERNAL_SERVER_ERROR_MSG = 'Произошла ошибка на сервере';
 const NOT_FOUND_MSG = 'Карточка не найдена';
-function handleDbError(error, res) {
-  if (
-    error
-    && (error._message === 'card validation failed' || error._message === 'Validation failed')
-  ) {
-    res.status(400).send({ message: BAD_REQUEST_MSG });
-  } else {
-    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...error });
-  }
-}
+const BAD_REQUEST_STATUS = 400;
+const INTERNAL_SERVER_ERR_STATUS = 500;
+const NOT_FOUND_STATUS = 404;
+const SUCCESS_STATUS = 200;
 
 const getCards = async (req, res) => {
   try {
     // console.log('get cards');
     const cards = await Card.find({});
-    res.status(200).send(cards);
+    res.status(SUCCESS_STATUS).send({ data: cards });
   } catch (e) {
-    res.status(500).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
@@ -30,9 +23,14 @@ const createCard = async (req, res) => {
     // console.log('create card');
     req.body.owner = req.user._id;
     const card = await new Card(req.body).save();
-    res.status(200).send(card);
+    res.status(SUCCESS_STATUS).send({ data: card });
   } catch (e) {
-    handleDbError(e, res);
+    // console.log(JSON.stringify(e));
+    if (e && e.errors && e.errors.name && e.errors.name.name === 'ValidatorError') {
+      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
+      return;
+    }
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
@@ -43,13 +41,21 @@ const deleteCard = async (req, res) => {
     const cardToDelete = await Card.findByIdAndRemove(req.params.cardId);
     // console.log(cardToDelete);
     if (!cardToDelete) {
-      res.status(404).send({ message: NOT_FOUND_MSG });
+      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
     } else {
-      res.status(200).send('');
+      res.status(SUCCESS_STATUS).send({ data: cardToDelete });
     }
   } catch (e) {
+    if (e.name === 'CastError') {
+      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
+      return;
+    }
     // console.log(e);
-    handleDbError(e, res);
+    // if (e?.errors?.name?.name === 'ValidatorError') {
+    //   res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
+    //   return;
+    // }
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
@@ -62,12 +68,20 @@ const putLike = async (req, res) => {
       { new: true },
     );
     if (!updatedCard) {
-      res.status(404).send({ message: NOT_FOUND_MSG });
+      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
     } else {
-      res.status(200).send('');
+      res.status(SUCCESS_STATUS).send({ data: updatedCard });
     }
   } catch (e) {
-    handleDbError(e, res);
+    if (e.name === 'CastError') {
+      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
+      return;
+    }
+    // if (e && e.errors && e.errors.name && e.errors.name.name === 'ValidatorError') {
+    //   res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
+    //   return;
+    // }
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
@@ -80,12 +94,20 @@ const deleteLike = async (req, res) => {
       { new: true },
     );
     if (!updatedCard) {
-      res.status(404).send({ message: NOT_FOUND_MSG });
+      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
     } else {
-      res.status(200).send('');
+      res.status(SUCCESS_STATUS).send({ data: updatedCard });
     }
   } catch (e) {
-    handleDbError(e, res);
+    if (e.name === 'CastError') {
+      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
+      return;
+    }
+    // if (e && e.errors && e.errors.name && e.errors.name.name === 'ValidatorError') {
+    //   res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
+    //   return;
+    // }
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
   }
 };
 
