@@ -9,7 +9,6 @@ const { PORT = 3000 } = process.env;
 const app = express();
 app.use(express.json());
 
-// for the yandex project
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
   useUnifiedTopology: false,
@@ -17,7 +16,7 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 
 app.use((req, res, next) => {
   req.user = {
-    _id: '631d147cad13dd266771cb2e', // вставьте сюда _id созданного в предыдущем пункте пользователя
+    _id: '631d147cad13dd266771cb2e',
   };
 
   next();
