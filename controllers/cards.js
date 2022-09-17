@@ -14,7 +14,7 @@ const getCards = async (req, res) => {
     const cards = await Card.find({});
     res.status(SUCCESS_STATUS).send({ data: cards });
   } catch (e) {
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
   }
 };
 
@@ -26,11 +26,11 @@ const createCard = async (req, res) => {
     res.status(SUCCESS_STATUS).send({ data: card });
   } catch (e) {
     // console.log(JSON.stringify(e));
-    if (e && e.errors && e.errors.name && e.errors.name.name === 'ValidatorError') {
-      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
+    if (e.name === 'ValidationError') {
+      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG });
       return;
     }
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
   }
 };
 
@@ -55,7 +55,7 @@ const deleteCard = async (req, res) => {
     //   res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
     //   return;
     // }
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
   }
 };
 
@@ -81,7 +81,7 @@ const putLike = async (req, res) => {
     //   res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
     //   return;
     // }
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
   }
 };
 
@@ -107,7 +107,7 @@ const deleteLike = async (req, res) => {
     //   res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG, ...e });
     //   return;
     // }
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG, ...e });
+    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
   }
 };
 
