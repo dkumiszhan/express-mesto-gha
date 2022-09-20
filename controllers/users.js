@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 
 const BAD_REQUEST_MSG = 'Переданы некорректные данные';
@@ -36,8 +37,13 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { name, about, avatar } = req.body;
-    const user = await new User({ name, about, avatar }).save();
+    const {
+      name, about, avatar, email, password,
+    } = req.body;
+    const passwordHash = bcrypt.hash(password, 10);
+    const user = await new User({
+      name, about, avatar, email, passwordHash,
+    }).save();
 
     res.status(SUCCESS_STATUS).send({ data: user });
   } catch (e) {
