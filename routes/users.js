@@ -1,22 +1,40 @@
 const express = require('express');
+const { celebrate, Joi } = require('celebrate');
+const auth = require('../middlewares/auth');
+
 const {
   getUsers,
   getUserById,
-  createUser,
   updateUserInfo,
   updateUserAvatar,
+  getUserInfo,
 } = require('../controllers/users');
 
 const userRoutes = express.Router();
 
+userRoutes.use('/users', auth);
+
 userRoutes.get('/users', getUsers);
 
-userRoutes.get('/users/:userId', getUserById);
+userRoutes.get('/users/me', getUserInfo);
 
-userRoutes.post('/users', createUser);
+userRoutes.get('/users/:userId', celebrate({
+  params: Joi.object().keys({
+    userId: Joi.string().alphanum().length(24),
+  }),
+}), getUserById);
 
-userRoutes.patch('/users/me', updateUserInfo);
+userRoutes.patch('/users/me', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+  }),
+}), updateUserInfo);
 
-userRoutes.patch('/users/me/avatar', updateUserAvatar);
+userRoutes.patch('/users/me/avatar', celebrate({
+  body: Joi.object().keys({
+    avatar: Joi.string().pattern(/^https?:\/\/(www\.)?[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=-]+#?$/),
+  }),
+}), updateUserAvatar);
 
 module.exports = { userRoutes };

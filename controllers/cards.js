@@ -1,54 +1,61 @@
 const Card = require('../models/card');
+const InternalServerError = require('../middlewares/errors/internalServerError');
+const BadRequestError = require('../middlewares/errors/badRequestError');
+const NotFoundError = require('../middlewares/errors/notFoundError');
+const ForbiddenError = require('../middlewares/errors/forbiddenError');
 
 const BAD_REQUEST_MSG = 'Переданы некорректные данные';
 const INTERNAL_SERVER_ERROR_MSG = 'Произошла ошибка на сервере';
 const NOT_FOUND_MSG = 'Карточка не найдена';
-const BAD_REQUEST_STATUS = 400;
-const INTERNAL_SERVER_ERR_STATUS = 500;
-const NOT_FOUND_STATUS = 404;
+const FORBIDDEN_MSG = 'Ошибка прав';
 const SUCCESS_STATUS = 200;
 
-const getCards = async (req, res) => {
+const getCards = async (req, res, next) => {
   try {
     const cards = await Card.find({});
     res.status(SUCCESS_STATUS).send({ data: cards });
   } catch (e) {
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
+    console.error('Error getting cards', e);
+    next(new InternalServerError(INTERNAL_SERVER_ERROR_MSG));
   }
 };
 
-const createCard = async (req, res) => {
+const createCard = async (req, res, next) => {
   try {
     req.body.owner = req.user._id;
     const card = await new Card(req.body).save();
     res.status(SUCCESS_STATUS).send({ data: card });
   } catch (e) {
     if (e.name === 'ValidationError') {
-      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG });
+      next(new BadRequestError(BAD_REQUEST_MSG));
       return;
     }
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
+    next(new InternalServerError(INTERNAL_SERVER_ERROR_MSG));
   }
 };
 
-const deleteCard = async (req, res) => {
+const deleteCard = async (req, res, next) => {
   try {
-    const cardToDelete = await Card.findByIdAndRemove(req.params.cardId);
+    const cardToDelete = await Card.findById(req.params.cardId);
     if (!cardToDelete) {
-      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
-    } else {
+      next(new NotFoundError(NOT_FOUND_MSG));
+    } else if (cardToDelete.owner.toString() === req.user._id) {
+      cardToDelete.remove();
       res.status(SUCCESS_STATUS).send({ data: cardToDelete });
+      return;
+    } else {
+      next(new ForbiddenError(FORBIDDEN_MSG));
     }
   } catch (e) {
     if (e.name === 'CastError') {
-      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG });
+      next(new BadRequestError(BAD_REQUEST_MSG));
       return;
     }
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
+    next(new InternalServerError(INTERNAL_SERVER_ERROR_MSG));
   }
 };
 
-const putLike = async (req, res) => {
+const putLike = async (req, res, next) => {
   try {
     const updatedCard = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -56,20 +63,20 @@ const putLike = async (req, res) => {
       { new: true },
     );
     if (!updatedCard) {
-      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
+      next(new NotFoundError(NOT_FOUND_MSG));
     } else {
       res.status(SUCCESS_STATUS).send({ data: updatedCard });
     }
   } catch (e) {
     if (e.name === 'CastError') {
-      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG });
+      next(new BadRequestError(BAD_REQUEST_MSG));
       return;
     }
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
+    next(new InternalServerError(INTERNAL_SERVER_ERROR_MSG));
   }
 };
 
-const deleteLike = async (req, res) => {
+const deleteLike = async (req, res, next) => {
   try {
     const updatedCard = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -77,16 +84,16 @@ const deleteLike = async (req, res) => {
       { new: true },
     );
     if (!updatedCard) {
-      res.status(NOT_FOUND_STATUS).send({ message: NOT_FOUND_MSG });
+      next(new NotFoundError(NOT_FOUND_MSG));
     } else {
       res.status(SUCCESS_STATUS).send({ data: updatedCard });
     }
   } catch (e) {
     if (e.name === 'CastError') {
-      res.status(BAD_REQUEST_STATUS).send({ message: BAD_REQUEST_MSG });
+      next(new BadRequestError(BAD_REQUEST_MSG));
       return;
     }
-    res.status(INTERNAL_SERVER_ERR_STATUS).send({ message: INTERNAL_SERVER_ERROR_MSG });
+    next(new InternalServerError(INTERNAL_SERVER_ERROR_MSG));
   }
 };
 
