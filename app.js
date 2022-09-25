@@ -23,7 +23,7 @@ app.post('/signup', celebrate({
     password: Joi.string().required(),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(/^https?:\/\/(www\.)?[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=-]+#?$/),
+    avatar: Joi.string().pattern(/^https?:\/\/(www\.)?[A-Za-z0-9._~:/?[\]@!$&'()*+,;=-]+\.[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=-]+#?$/),
   }),
 }), createUser);
 app.post('/signin', celebrate({
@@ -35,9 +35,9 @@ app.post('/signin', celebrate({
 
 app.use(userRoutes);
 app.use(cardRoutes);
+app.use(notFoundHandler);
 app.use(errors());
 app.use(errorHandler);
-app.use(notFoundHandler);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

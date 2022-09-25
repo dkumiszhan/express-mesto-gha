@@ -4,7 +4,6 @@ const UnauthorizedError = require('./errors/unauthorized');
 const UNAUTHORIZED_MSG = 'Ошибка авторизации';
 
 function auth(req, res, next) {
-  console.log('i am authing');
   const { authorization } = req.headers;
   if (!authorization || !authorization.startsWith('Bearer ')) {
     next(new UnauthorizedError(UNAUTHORIZED_MSG));
@@ -20,7 +19,6 @@ function auth(req, res, next) {
     // return res.status(401).send({ message: 'Необходима авторизация' });
   }
   req.user = payload;
-  console.log(payload);
   next();
   // return res.status(200).send({ data: payload });
 }

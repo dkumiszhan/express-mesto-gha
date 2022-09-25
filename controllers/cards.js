@@ -8,23 +8,21 @@ const BAD_REQUEST_MSG = 'Переданы некорректные данные'
 const INTERNAL_SERVER_ERROR_MSG = 'Произошла ошибка на сервере';
 const NOT_FOUND_MSG = 'Карточка не найдена';
 const FORBIDDEN_MSG = 'Ошибка прав';
-const SUCCESS_STATUS = 200;
 
 const getCards = async (req, res, next) => {
   try {
     const cards = await Card.find({});
-    res.status(SUCCESS_STATUS).send({ data: cards });
+    res.send({ data: cards });
   } catch (e) {
-    console.error('Error getting cards', e);
     next(new InternalServerError(INTERNAL_SERVER_ERROR_MSG));
   }
 };
 
 const createCard = async (req, res, next) => {
   try {
-    req.body.owner = req.user._id;
-    const card = await new Card(req.body).save();
-    res.status(SUCCESS_STATUS).send({ data: card });
+    const { name, link } = req.body;
+    const card = await new Card({ name, link, owner: req.user._id }).save();
+    res.send({ data: card });
   } catch (e) {
     if (e.name === 'ValidationError') {
       next(new BadRequestError(BAD_REQUEST_MSG));
@@ -40,8 +38,8 @@ const deleteCard = async (req, res, next) => {
     if (!cardToDelete) {
       next(new NotFoundError(NOT_FOUND_MSG));
     } else if (cardToDelete.owner.toString() === req.user._id) {
-      cardToDelete.remove();
-      res.status(SUCCESS_STATUS).send({ data: cardToDelete });
+      await cardToDelete.remove();
+      res.send({ data: cardToDelete });
       return;
     } else {
       next(new ForbiddenError(FORBIDDEN_MSG));
@@ -65,7 +63,7 @@ const putLike = async (req, res, next) => {
     if (!updatedCard) {
       next(new NotFoundError(NOT_FOUND_MSG));
     } else {
-      res.status(SUCCESS_STATUS).send({ data: updatedCard });
+      res.send({ data: updatedCard });
     }
   } catch (e) {
     if (e.name === 'CastError') {
@@ -86,7 +84,7 @@ const deleteLike = async (req, res, next) => {
     if (!updatedCard) {
       next(new NotFoundError(NOT_FOUND_MSG));
     } else {
-      res.status(SUCCESS_STATUS).send({ data: updatedCard });
+      res.send({ data: updatedCard });
     }
   } catch (e) {
     if (e.name === 'CastError') {
